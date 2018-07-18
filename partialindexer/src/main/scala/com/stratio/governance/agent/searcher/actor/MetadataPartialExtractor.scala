@@ -81,59 +81,6 @@ class MetadataPartialExtractor(indexer: ActorRef, override val circuitBreakerCon
     db.close()
   }
 
-  def keyValuePairProcess(keyValuePair: KeyValuePair) = {
-
-    val parentId = keyValuePair.parent_id
-    val parentType = keyValuePair.parent_type
-    val parentTable = KeyValuePairMapping.parentTable(parentType)
-
-    val statement = connection.createStatement
-    val resultSet: ResultSet = statement.executeQuery(s"select * from dg_metadata.$parentTable as parent " +
-      s"join dg_metadata.key_value_pair as kvp on parent.id = kvp.parent_id and parent_type = $parentType " +
-      s"where parent.id = $parentId")
-    val entity: Seq[EntityRowES] = KeyValuePairMapping.entityFromResultSet(parentType, resultSet)
-    resultSet.close
-    statement.close
-
-    entity.head
-
-  }
-
-  def databaseSchemaProcess(databaseSchema: DatabaseSchema) = {
-
-    val parentId = databaseSchema.id
-    val parentType = KeyValuePairMapping.parentType(DatabaseSchema.entity)
-
-    val statement = connection.createStatement
-    val resultSet: ResultSet = statement.executeQuery(s"select * from dg_metadata.key_value_pair " +
-      s"where parent_id = $parentId and parent_type = $parentType")
-
-    val entity: Seq[EntityRowES] = DatabaseSchema.entityFromResultSet(databaseSchema, resultSet)
-    /*
-        resultSet.close
-        statement.close
-    */
-
-    entity.head
-
-  }
-
-  def fileTableProcess(fileTable: FileTable) = {
-
-    val parentId = fileTable.id
-    val parentType = KeyValuePairMapping.parentType(FileTable.entity)
-
-    val statement = connection.createStatement
-    val resultSet: ResultSet = statement.executeQuery(s"select * from dg_metadata.key_value_pair " +
-      s"where parent_id = $parentId and parent_type = $parentType")
-
-    val entity: Seq[EntityRowES] = FileTable.entityFromResultSet(fileTable, resultSet)
-    resultSet.close
-    statement.close
-
-    org.json4s.native.Serialization.write(entity)
-
-  }
 
   def receive = {
     case "postgresNotification" => {
@@ -154,9 +101,7 @@ class MetadataPartialExtractor(indexer: ActorRef, override val circuitBreakerCon
           self ! "postgresNotification"
         }
 
-
       }
-
     }
 
     case Chunks(list) =>
