@@ -2,7 +2,7 @@ package com.stratio.governance.agent.searcher.actor
 
 import java.sql.{Connection, ResultSet, Statement}
 
-import akka.actor.{Actor, ActorRef}
+import akka.actor.{Actor, ActorRef, Cancellable}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.stratio.governance.agent.searcher.actor.MetadataPartialExtractor.Chunks
@@ -28,16 +28,16 @@ class MetadataPartialExtractor(indexer: ActorRef, override val circuitBreakerCon
   extends Actor with CircuitBreakerConfig{
 
   private lazy val LOG: Logger = LoggerFactory.getLogger(getClass.getName)
-  implicit val timeout =
+  implicit val timeout: Timeout =
     Timeout(2000, MILLISECONDS)
-  implicit val formats = DefaultFormats
+  implicit val formats: DefaultFormats.type = DefaultFormats
 
   // execution context for the notifications
   context.dispatcher
 
   val connection: Connection = ConnectionPool.borrow()
   val db: DB = DB(connection)
-  val postgresNotification = context.system.scheduler.schedule(1000 millis, 5000 millis, self, "postgresNotification")
+  val postgresNotification: Cancellable = context.system.scheduler.schedule(1000 millis, 5000 millis, self, "postgresNotification")
 
   //implicit val formats = DefaultFormats
 

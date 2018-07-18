@@ -27,40 +27,15 @@ object KeyValuePairMapping {
 
   def entityFromResultSet(parenType: Int, resultSet: ResultSet): Seq[EntityRowES] = {
     parenType match {
-      case 1 => {
+      case 1 =>
         //resultSet has as many records as key value pairs has got the database
         val databaseSchemaList: List[(DatabaseSchema, KeyValuePair)] = getResult(resultSet)
 
         val databaseSchemaES: Seq[DatabaseSchemaES] = Seq(DatabaseSchemaES.
           fromDatabaseSchemaList(databaseSchemaList))
         databaseSchemaES
-
-      }
     }
   }
-/*
-  val parentEntity: Map[Int, EntityRow] = Map[Int, EntityRow](
-    //TODO implement each case properly
-
-    1 -> { DatabaseSchema.getClass.newInstance()
-/*
-      val module = runtimeMirror.staticModule("com.stratio.governance.se.model.DatabaseSchema")
-      val obj: universe.ModuleMirror = runtimeMirror.reflectModule(module)
-      obj.instance
-*/
-    }
-  )
-*/
-
-/*
-  import scala.reflect.runtime.{universe => ru}
-  def getType[T](clazz: Class[T]):ru.Type = {
-    val runtimeMirror =  ru.runtimeMirror(clazz.getClassLoader)
-    runtimeMirror.classSymbol(clazz).toType
-  }
-*/
-
-
 
   @scala.annotation.tailrec
   def getResult(resultSet: ResultSet, list: List[(DatabaseSchema, KeyValuePair)] = Nil)

@@ -20,7 +20,7 @@ import scala.concurrent.Future
 class PartialIndexer extends Actor {
 
   val connection: Connection = ConnectionPool.borrow()
-  implicit val formats = DefaultFormats
+  implicit val formats: DefaultFormats.type = DefaultFormats
 
   override def receive: Receive = {
     case IndexerEvent(chunk) => {
@@ -28,29 +28,27 @@ class PartialIndexer extends Actor {
       val lista: Array[EntityRowES] = chunk.map(not => {
 
         // convert to object
-        implicit val formats = DefaultFormats
+        implicit val formats: DefaultFormats.type = DefaultFormats
         val json: JValue = parse(not.getParameter) \\ "data"
         val table: JValue = parse(not.getParameter) \\ "table"
+
+        //TODO check JSONObject can parse JsonB postgresql type
+
+
         val requestToIndexer: EntityRowES = table.values match {
-          case ("datastore_engine") => {
+          case ("datastore_engine") =>
             val datastoreEngine: DatastoreEngine = json.extract[DatastoreEngine]
             val datastoreEngineES = Seq(DatastoreEngineES.fromDatastoreEngine(datastoreEngine))
             datastoreEngineES.head
-          }
-          case ("database_schema") => {
+          case ("database_schema") =>
             val databaseSchema: DatabaseSchema = json.extract[DatabaseSchema]
             databaseSchemaProcess(databaseSchema)
-          }
-          /*
-                      case ("file_table") => {
-                        val fileTable: FileTable = json.extract[FileTable]
-                        fileTableProcess(fileTable)
-                      }
-          */
-          case ("key_value_pair") => {
+          case ("file_table") =>
+            val fileTable: FileTable = json.extract[FileTable]
+            fileTableProcess(fileTable)
+          case ("key_value_pair") =>
             val keyValuePair = json.extract[KeyValuePair]
             keyValuePairProcess(keyValuePair)
-          }
           case _ => null  //TODO errors management
         }
         requestToIndexer
@@ -66,7 +64,7 @@ class PartialIndexer extends Actor {
   }
 
 
-  def keyValuePairProcess(keyValuePair: KeyValuePair) = {
+  def keyValuePairProcess(keyValuePair: KeyValuePair): EntityRowES = {
 
     val parentId = keyValuePair.parent_id
     val parentType = keyValuePair.parent_type
@@ -77,23 +75,7 @@ class PartialIndexer extends Actor {
       s"join dg_metadata.key_value_pair as kvp on parent.id = kvp.parent_id and parent_type = $parentType " +
       s"where parent.id = $parentId")
     val entity: Seq[EntityRowES] = KeyValuePairMapping.entityFromResultSet(parentType, resultSet)
-    resultSet.close
-    statement.close
-
-    entity.head
-
-  }
-
-  def databaseSchemaProcess(databaseSchema: DatabaseSchema) = {
-
-    val parentId = databaseSchema.id
-    val parentType = KeyValuePairMapping.parentType(DatabaseSchema.entity)
-
-    val statement = connection.createStatement
-    val resultSet: ResultSet = statement.executeQuery(s"select * from dg_metadata.key_value_pair " +
-      s"where parent_id = $parentId and parent_type = $parentType")
-
-    val entity: Seq[EntityRowES] = DatabaseSchema.entityFromResultSet(databaseSchema, resultSet)
+    //TODO check connection and statement closures
     /*
         resultSet.close
         statement.close
@@ -103,7 +85,27 @@ class PartialIndexer extends Actor {
 
   }
 
-  def fileTableProcess(fileTable: FileTable) = {
+  def databaseSchemaProcess(databaseSchema: DatabaseSchema): EntityRowES = {
+
+    val parentId = databaseSchema.id
+    val parentType = KeyValuePairMapping.parentType(DatabaseSchema.entity)
+
+    val statement = connection.createStatement
+    val resultSet: ResultSet = statement.executeQuery(s"select * from dg_metadata.key_value_pair " +
+      s"where parent_id = $parentId and parent_type = $parentType")
+
+    val entity: Seq[EntityRowES] = DatabaseSchema.entityFromResultSet(databaseSchema, resultSet)
+    //TODO check connection and statement closures
+    /*
+        resultSet.close
+        statement.close
+    */
+
+    entity.head
+
+  }
+
+  def fileTableProcess(fileTable: FileTable): EntityRowES = {
 
     val parentId = fileTable.id
     val parentType = KeyValuePairMapping.parentType(FileTable.entity)
@@ -113,11 +115,12 @@ class PartialIndexer extends Actor {
       s"where parent_id = $parentId and parent_type = $parentType")
 
     val entity: Seq[EntityRowES] = FileTable.entityFromResultSet(fileTable, resultSet)
+    //TODO check connection and statement closures
+/*
     resultSet.close
     statement.close
-
-    org.json4s.native.Serialization.write(entity)
-
+*/
+    entity.head
   }
 
 

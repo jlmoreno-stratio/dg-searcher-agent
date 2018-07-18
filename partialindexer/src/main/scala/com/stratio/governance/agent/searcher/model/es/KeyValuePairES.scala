@@ -48,7 +48,7 @@ object KeyValuePairES {
   }
 
 
-  def fromDatastoreEngine(datastoreEngine: DatastoreEngine) = {
+  def fromDatastoreEngine(datastoreEngine: DatastoreEngine): KeyValuePairES = {
     //TODO these values must be recovered from database
     KeyValuePairES(true, "1.0".toFloat, "owner")
   }
