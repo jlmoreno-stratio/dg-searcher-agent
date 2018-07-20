@@ -3,7 +3,7 @@ package com.stratio.governance.agent.searcher.actor
 import java.sql.{Connection, ResultSet}
 
 import akka.actor.Actor
-import akka.pattern._
+import akka.util.Timeout
 import com.stratio.governance.agent.searcher.actor.PartialIndexer.IndexerEvent
 import com.stratio.governance.agent.searcher.http.HttpRequester
 import com.stratio.governance.agent.searcher.model.es.{DatastoreEngineES, EntityRowES}
@@ -16,16 +16,19 @@ import scalikejdbc.ConnectionPool
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.concurrent.duration.MILLISECONDS
 
 class PartialIndexer extends Actor {
 
   val connection: Connection = ConnectionPool.borrow()
   implicit val formats: DefaultFormats.type = DefaultFormats
+  implicit val timeout: Timeout =
+    Timeout(5000, MILLISECONDS)
 
   override def receive: Receive = {
-    case IndexerEvent(chunk) => {
+    case IndexerEvent(chunk) =>
 
-      val lista: Array[EntityRowES] = chunk.map(not => {
+      val lista: Array[EntityRowES] = chunk.map { not =>
 
         // convert to object
         implicit val formats: DefaultFormats.type = DefaultFormats
@@ -33,7 +36,6 @@ class PartialIndexer extends Actor {
         val table: JValue = parse(not.getParameter) \\ "table"
 
         //TODO check JSONObject can parse JsonB postgresql type
-
 
         val requestToIndexer: EntityRowES = table.values match {
           case ("datastore_engine") =>
@@ -49,17 +51,14 @@ class PartialIndexer extends Actor {
           case ("key_value_pair") =>
             val keyValuePair = json.extract[KeyValuePair]
             keyValuePairProcess(keyValuePair)
-          case _ => null  //TODO errors management
+          case _ => null //TODO errors management
         }
         requestToIndexer
-
       }
-      )
 
       val documentsBulk: String = org.json4s.native.Serialization.write(lista)
-      Future(HttpRequester.postRequest(documentsBulk))
 
-    } pipeTo sender
+      sender ! Future(HttpRequester.postRequest(documentsBulk))
 
   }
 
@@ -75,11 +74,8 @@ class PartialIndexer extends Actor {
       s"join dg_metadata.key_value_pair as kvp on parent.id = kvp.parent_id and parent_type = $parentType " +
       s"where parent.id = $parentId")
     val entity: Seq[EntityRowES] = KeyValuePairMapping.entityFromResultSet(parentType, resultSet)
-    //TODO check connection and statement closures
-    /*
-        resultSet.close
-        statement.close
-    */
+    resultSet.close
+    statement.close
 
     entity.head
 
@@ -95,11 +91,8 @@ class PartialIndexer extends Actor {
       s"where parent_id = $parentId and parent_type = $parentType")
 
     val entity: Seq[EntityRowES] = DatabaseSchema.entityFromResultSet(databaseSchema, resultSet)
-    //TODO check connection and statement closures
-    /*
-        resultSet.close
-        statement.close
-    */
+    resultSet.close
+    statement.close
 
     entity.head
 
@@ -115,19 +108,12 @@ class PartialIndexer extends Actor {
       s"where parent_id = $parentId and parent_type = $parentType")
 
     val entity: Seq[EntityRowES] = FileTable.entityFromResultSet(fileTable, resultSet)
-    //TODO check connection and statement closures
-/*
     resultSet.close
     statement.close
-*/
+
     entity.head
   }
-
-
 }
-
-
-
 
 
 object PartialIndexer {

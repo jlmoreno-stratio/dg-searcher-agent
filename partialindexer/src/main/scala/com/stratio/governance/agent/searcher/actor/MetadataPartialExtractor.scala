@@ -6,9 +6,6 @@ import akka.actor.{Actor, ActorRef, Cancellable}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.stratio.governance.agent.searcher.actor.MetadataPartialExtractor.Chunks
-import com.stratio.governance.agent.searcher.model.es.EntityRowES
-import com.stratio.governance.agent.searcher.model.utils.KeyValuePairMapping
-import com.stratio.governance.agent.searcher.model.{DatabaseSchema, FileTable, KeyValuePair}
 import com.typesafe.config.Config
 import org.apache.commons.dbcp.DelegatingConnection
 import org.json4s.DefaultFormats
@@ -28,8 +25,7 @@ class MetadataPartialExtractor(indexer: ActorRef, override val circuitBreakerCon
   extends Actor with CircuitBreakerConfig{
 
   private lazy val LOG: Logger = LoggerFactory.getLogger(getClass.getName)
-  implicit val timeout: Timeout =
-    Timeout(2000, MILLISECONDS)
+  implicit val timeout: Timeout = Timeout(5000, MILLISECONDS)
   implicit val formats: DefaultFormats.type = DefaultFormats
 
   // execution context for the notifications
@@ -37,7 +33,8 @@ class MetadataPartialExtractor(indexer: ActorRef, override val circuitBreakerCon
 
   val connection: Connection = ConnectionPool.borrow()
   val db: DB = DB(connection)
-  val postgresNotification: Cancellable = context.system.scheduler.schedule(1000 millis, 5000 millis, self, "postgresNotification")
+  val postgresNotification: Cancellable = context.system.scheduler.scheduleOnce(1000 millis, self, "postgresNotification")
+  val pgConnection: PGConnection = connection.asInstanceOf[DelegatingConnection].getInnermostDelegate.asInstanceOf[PGConnection]
 
   //implicit val formats = DefaultFormats
 
@@ -67,12 +64,14 @@ class MetadataPartialExtractor(indexer: ActorRef, override val circuitBreakerCon
     db.autoClose(false)
     db.localTx { implicit session =>
       session.connection.setAutoCommit(false)
-      //session.connection.createStatement().setFetchSize(1000)
       val stmt: Statement = session.connection.createStatement(ResultSet.CONCUR_READ_ONLY,
         ResultSet.FETCH_FORWARD,
-        ResultSet.TYPE_FORWARD_ONLY)//.setFetchSize(1000)//.execute("LISTEN events")
+        ResultSet.TYPE_FORWARD_ONLY)
       stmt.setFetchSize(1000)
+      stmt.setMaxRows(1000)
+
       stmt.execute("LISTEN events")
+
     }
   }
 
@@ -83,16 +82,8 @@ class MetadataPartialExtractor(indexer: ActorRef, override val circuitBreakerCon
 
 
   def receive = {
-    case "postgresNotification" => {
+    case "postgresNotification" =>
       db.readOnly { implicit session =>
-        val pgConnection = connection.asInstanceOf[DelegatingConnection].getInnermostDelegate.asInstanceOf[PGConnection]
-        //TODO revisar:
-
-        pgConnection.setDefaultFetchSize(1000)
-
-        println(s"FETCH SIZE :::::::::::::: ${pgConnection.getDefaultFetchSize}")
-
-        pgConnection.setPrepareThreshold(1000)
         val notifications: Array[PGNotification] = Option(pgConnection.getNotifications).getOrElse(Array[PGNotification]())
 
         if (notifications.nonEmpty) {
@@ -100,15 +91,14 @@ class MetadataPartialExtractor(indexer: ActorRef, override val circuitBreakerCon
         }else{
           self ! "postgresNotification"
         }
-
       }
-    }
+
 
     case Chunks(list) =>
-
       if(list.nonEmpty){
-        indexer ? PartialIndexer.IndexerEvent(list.head)
-        self ! Chunks(list.tail)
+        (indexer ? PartialIndexer.IndexerEvent(list.head)).onSuccess{ case _ =>
+          self ! Chunks(list.tail)
+        }
       } else {
         self ! "postgresNotification"
       }
