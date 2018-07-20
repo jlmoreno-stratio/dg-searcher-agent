@@ -23,7 +23,7 @@ case class DatabaseSchemaES(generated_id: String,
 object DatabaseSchemaES {
 
   def fromDatabaseSchema(databaseSchema: DatabaseSchema, keyValuePair: KeyValuePair): DatabaseSchemaES = {
-    DatabaseSchemaES(GenerateESObject.genGeneratedId("PostgreSQL", databaseSchema.id),
+    DatabaseSchemaES(databaseSchema.metadata_path,
       GenerateESObject.genGenerated(databaseSchema, keyValuePair),
       databaseSchema.id,
       databaseSchema.name,

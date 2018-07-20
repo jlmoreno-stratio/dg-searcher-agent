@@ -21,9 +21,8 @@ case class DatastoreEngineES(generated_id: String,
 object DatastoreEngineES {
 
   def fromDatastoreEngine(datastoreEngine: DatastoreEngine): DatastoreEngineES ={
-    DatastoreEngineES(GenerateESObject.genGeneratedId(datastoreEngine),
-                      GenerateESObject.genGenerated(datastoreEngine),
-                      datastoreEngine.id,
+    DatastoreEngineES(datastoreEngine.metadata_path,
+      GenerateESObject.genGenerated(datastoreEngine), datastoreEngine.id,
       datastoreEngine.name,
       datastoreEngine.`type`,
       datastoreEngine.credentials.orNull,

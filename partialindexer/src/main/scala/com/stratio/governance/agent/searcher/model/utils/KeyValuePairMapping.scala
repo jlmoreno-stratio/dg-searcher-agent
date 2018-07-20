@@ -19,8 +19,8 @@ object KeyValuePairMapping {
 
   val parentType: Map[String, Int] = Map[String, Int](
     "database" -> 1,
-    "table" -> 2,
-    "column" -> 3,
+    "sqltable" -> 2,
+    "sqlcolumn" -> 3,
     "filetable" -> 4,
     "filecolumn" -> 5
   )

@@ -5,6 +5,8 @@ case class CategoryES(id: String,
 
 object CategoryES{
 
+  //TODO all these functions are identical. Merge into one and test them
+
   def fromDatastoreEngineGeneratedId(generatedID: String): CategoryES = {
     CategoryES(generatedID.split("/").take(1).mkString("/"),
                generatedID.split("/").take(1).mkString("/"))
@@ -17,5 +19,28 @@ object CategoryES{
 
   }
 
+  def fromDatabaseSchemaGeneratedId(generatedID: String): CategoryES = {
+    CategoryES(generatedID.split("/").take(1).mkString("/"),
+      generatedID.split("/").take(1).mkString("/"))
+
+  }
+
+  def fromFileColumnGeneratedId(generatedID: String): CategoryES = {
+    CategoryES(generatedID.split("/").take(1).mkString("/"),
+      generatedID.split("/").take(1).mkString("/"))
+
+  }
+
+  def fromSqlColumnGeneratedId(generatedID: String): CategoryES = {
+    CategoryES(generatedID.split("/").take(1).mkString("/"),
+      generatedID.split("/").take(1).mkString("/"))
+
+  }
+
+  def fromSqlTableGeneratedId(generatedID: String): CategoryES = {
+    CategoryES(generatedID.split("/").take(1).mkString("/"),
+      generatedID.split("/").take(1).mkString("/"))
+
+  }
 
 }
