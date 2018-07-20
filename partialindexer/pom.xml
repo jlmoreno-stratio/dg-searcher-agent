@@ -42,7 +42,7 @@
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-slf4j_${scala.binary.version}</artifactId>
-            <version>2.4.8</version>
+            <version>${akka.version}</version>
         </dependency>
 
         <!-- Apache Http client-->
