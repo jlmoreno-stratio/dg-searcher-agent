@@ -26,7 +26,7 @@ class MetadataPartialExtractor(indexer: ActorRef, override val circuitBreakerCon
   extends Actor with CircuitBreakerConfig{
 
   private lazy val LOG: Logger = LoggerFactory.getLogger(getClass.getName)
-  implicit val timeout: Timeout = Timeout(500000, MILLISECONDS)
+  implicit val timeout: Timeout = Timeout(60000, MILLISECONDS)
   implicit val formats: DefaultFormats.type = DefaultFormats
 
   // execution context for the notifications

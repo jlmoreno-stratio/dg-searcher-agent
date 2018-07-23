@@ -23,7 +23,7 @@ class PartialIndexer extends Actor {
   val connection: Connection = ConnectionPool.borrow()
   implicit val formats: DefaultFormats.type = DefaultFormats
   implicit val timeout: Timeout =
-    Timeout(500000, MILLISECONDS)
+    Timeout(60000, MILLISECONDS)
 
   override def receive: Receive = {
     case IndexerEvent(chunk) =>
