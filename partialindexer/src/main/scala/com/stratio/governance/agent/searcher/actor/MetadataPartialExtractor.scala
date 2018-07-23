@@ -2,6 +2,7 @@ package com.stratio.governance.agent.searcher.actor
 
 import java.sql.{Connection, ResultSet, Statement}
 
+import scala.util.{Failure, Success}
 import akka.actor.{Actor, ActorRef, Cancellable}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -25,7 +26,7 @@ class MetadataPartialExtractor(indexer: ActorRef, override val circuitBreakerCon
   extends Actor with CircuitBreakerConfig{
 
   private lazy val LOG: Logger = LoggerFactory.getLogger(getClass.getName)
-  implicit val timeout: Timeout = Timeout(5000, MILLISECONDS)
+  implicit val timeout: Timeout = Timeout(60000, MILLISECONDS)
   implicit val formats: DefaultFormats.type = DefaultFormats
 
   // execution context for the notifications
@@ -96,9 +97,16 @@ class MetadataPartialExtractor(indexer: ActorRef, override val circuitBreakerCon
 
     case Chunks(list) =>
       if(list.nonEmpty){
-        (indexer ? PartialIndexer.IndexerEvent(list.head)).onSuccess{ case _ =>
-          self ! Chunks(list.tail)
+        (indexer ? PartialIndexer.IndexerEvent(list.head)).onComplete{
+          case Success(_) => self ! Chunks(list.tail)
+          case Failure(e) => {
+            //TODO manage errors
+            println(s"Indexation failed")
+            e.printStackTrace()
+          }
+
         }
+
       } else {
         self ! "postgresNotification"
       }

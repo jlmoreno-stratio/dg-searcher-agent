@@ -8,7 +8,7 @@ import com.stratio.governance.agent.searcher.actor.PartialIndexer.IndexerEvent
 import com.stratio.governance.agent.searcher.http.HttpRequester
 import com.stratio.governance.agent.searcher.model.es.{DatastoreEngineES, EntityRowES}
 import com.stratio.governance.agent.searcher.model.utils.KeyValuePairMapping
-import com.stratio.governance.agent.searcher.model.{DatabaseSchema, DatastoreEngine, FileTable, KeyValuePair}
+import com.stratio.governance.agent.searcher.model._
 import org.json4s.native.JsonMethods.parse
 import org.json4s.{DefaultFormats, JValue}
 import org.postgresql.PGNotification
@@ -23,7 +23,7 @@ class PartialIndexer extends Actor {
   val connection: Connection = ConnectionPool.borrow()
   implicit val formats: DefaultFormats.type = DefaultFormats
   implicit val timeout: Timeout =
-    Timeout(5000, MILLISECONDS)
+    Timeout(60000, MILLISECONDS)
 
   override def receive: Receive = {
     case IndexerEvent(chunk) =>
@@ -48,6 +48,15 @@ class PartialIndexer extends Actor {
           case ("file_table") =>
             val fileTable: FileTable = json.extract[FileTable]
             fileTableProcess(fileTable)
+          case ("file_column") =>
+            val fileColumn: FileColumn = json.extract[FileColumn]
+            fileColumnProcess(fileColumn)
+          case ("sql_table") =>
+            val sqlTable: SqlTable = json.extract[SqlTable]
+            sqlTableProcess(sqlTable)
+          case ("sql_column") =>
+            val sqlColumn: SqlColumn = json.extract[SqlColumn]
+            sqlColumnProcess(sqlColumn)
           case ("key_value_pair") =>
             val keyValuePair = json.extract[KeyValuePair]
             keyValuePairProcess(keyValuePair)
@@ -81,6 +90,7 @@ class PartialIndexer extends Actor {
 
   }
 
+  //TODO these function could be probably merged into a generic one, using EntityRow trait
   def databaseSchemaProcess(databaseSchema: DatabaseSchema): EntityRowES = {
 
     val parentId = databaseSchema.id
@@ -113,6 +123,55 @@ class PartialIndexer extends Actor {
 
     entity.head
   }
+
+  def fileColumnProcess(fileColumn: FileColumn): EntityRowES = {
+
+    val parentId = fileColumn.id
+    val parentType = KeyValuePairMapping.parentType(FileColumn.entity)
+
+    val statement = connection.createStatement
+    val resultSet: ResultSet = statement.executeQuery(s"select * from dg_metadata.key_value_pair " +
+      s"where parent_id = $parentId and parent_type = $parentType")
+
+    val entity: Seq[EntityRowES] = FileColumn.entityFromResultSet(fileColumn, resultSet)
+    resultSet.close
+    statement.close
+
+    entity.head
+  }
+
+  def sqlTableProcess(sqlTable: SqlTable): EntityRowES = {
+
+    val parentId = sqlTable.id
+    val parentType = KeyValuePairMapping.parentType(SqlTable.entity)
+
+    val statement = connection.createStatement
+    val resultSet: ResultSet = statement.executeQuery(s"select * from dg_metadata.key_value_pair " +
+      s"where parent_id = $parentId and parent_type = $parentType")
+
+    val entity: Seq[EntityRowES] = SqlTable.entityFromResultSet(sqlTable, resultSet)
+    resultSet.close
+    statement.close
+
+    entity.head
+  }
+
+  def sqlColumnProcess(sqlColumn: SqlColumn): EntityRowES = {
+
+    val parentId = sqlColumn.id
+    val parentType = KeyValuePairMapping.parentType(SqlColumn.entity)
+
+    val statement = connection.createStatement
+    val resultSet: ResultSet = statement.executeQuery(s"select * from dg_metadata.key_value_pair " +
+      s"where parent_id = $parentId and parent_type = $parentType")
+
+    val entity: Seq[EntityRowES] = SqlColumn.entityFromResultSet(sqlColumn, resultSet)
+    resultSet.close
+    statement.close
+
+    entity.head
+  }
+
 }
 
 

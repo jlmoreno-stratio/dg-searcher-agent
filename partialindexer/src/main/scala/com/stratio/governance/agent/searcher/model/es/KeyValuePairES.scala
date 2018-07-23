@@ -1,6 +1,6 @@
 package com.stratio.governance.agent.searcher.model.es
 
-import com.stratio.governance.agent.searcher.model.{DatabaseSchema, DatastoreEngine, FileTable, KeyValuePair}
+import com.stratio.governance.agent.searcher.model._
 
 import scala.util.Try
 
@@ -13,6 +13,8 @@ object KeyValuePairES {
   val GDP = "gdp"
   val QUALITY = "quality"
   val OWNER = "owner"
+
+  //TODO these functions are identical. Merge into one using EntityRow and test them
 
   def fromDatabaseSchemaList(databaseSchemaList: List[(DatabaseSchema, KeyValuePair)])
   : KeyValuePairES = {
@@ -42,6 +44,50 @@ object KeyValuePairES {
     }
   }
 
+  def fromFileColumnList(fileColumn: List[(FileColumn, KeyValuePair)])
+  : KeyValuePairES = {
+
+    fileColumn.head._2 match {
+      case null => null
+      case _ =>     KeyValuePairES(
+        Try(fileColumn.filter(_._2.key == GDP).head._2.value.toBoolean).getOrElse(false),
+        Try(fileColumn.filter(_._2.key == QUALITY).head._2.value.toFloat).getOrElse(0),
+        Try(fileColumn.filter(_._2.key == OWNER).head._2.value.toString).getOrElse("")
+      )
+
+    }
+  }
+
+  def fromSqlTableList(sqlTable: List[(SqlTable, KeyValuePair)])
+  : KeyValuePairES = {
+
+    sqlTable.head._2 match {
+      case null => null
+      case _ => KeyValuePairES(
+        Try(sqlTable.filter(_._2.key == GDP).head._2.value.toBoolean).getOrElse(false),
+        Try(sqlTable.filter(_._2.key == QUALITY).head._2.value.toFloat).getOrElse(0),
+        Try(sqlTable.filter(_._2.key == OWNER).head._2.value.toString).getOrElse("")
+      )
+
+    }
+  }
+
+  def fromSqlColumnList(sqlColumn: List[(SqlColumn, KeyValuePair)])
+    : KeyValuePairES = {
+
+    sqlColumn.head._2 match {
+      case null => null
+      case _ => KeyValuePairES(
+        Try(sqlColumn.filter(_._2.key == GDP).head._2.value.toBoolean).getOrElse(false),
+        Try(sqlColumn.filter(_._2.key == QUALITY).head._2.value.toFloat).getOrElse(0),
+        Try(sqlColumn.filter(_._2.key == OWNER).head._2.value.toString).getOrElse("")
+      )
+
+    }
+  }
+
+
+  ////
 
   def fromKeyValuePair(keyValuePair: KeyValuePair): KeyValuePairES = {
     KeyValuePairES(true, "1.0".toFloat, "owner")

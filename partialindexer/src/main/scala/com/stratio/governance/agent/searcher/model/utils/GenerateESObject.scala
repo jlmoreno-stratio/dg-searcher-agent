@@ -1,7 +1,7 @@
 package com.stratio.governance.agent.searcher.model.utils
 
 import com.stratio.governance.agent.searcher.model.es.{CategoryES, GeneratedES, KeyValuePairES}
-import com.stratio.governance.agent.searcher.model.{DatabaseSchema, DatastoreEngine, FileTable, KeyValuePair}
+import com.stratio.governance.agent.searcher.model._
 
 object GenerateESObject {
 
@@ -35,14 +35,14 @@ object GenerateESObject {
       "PostgreSQL",
       generatedId,
       GenerateESObject.genParentId(generatedId),
-      Seq(CategoryES.fromDatastoreEngineGeneratedId(generatedId)),
+      Seq(CategoryES.fromDatabaseSchemaGeneratedId(generatedId)),
       KeyValuePairES.fromKeyValuePair(keyValuePair))
   }
 
   def genGenerated(databaseSchema: DatabaseSchema, databaseSchemaList: List[(DatabaseSchema, KeyValuePair)])
   : GeneratedES = {
     val generatedId = GenerateESObject.genGeneratedId("PostgreSQL", databaseSchema.id)
-    GeneratedES(DatastoreEngine.entity,
+    GeneratedES(DatabaseSchema.entity,
       "PostgreSQL",
       generatedId,
       GenerateESObject.genParentId(generatedId),
@@ -53,12 +53,45 @@ object GenerateESObject {
   def genGenerated(fileTable: FileTable, fileTableList: List[(FileTable, KeyValuePair)])
   : GeneratedES = {
     val generatedId = GenerateESObject.genGeneratedId("PostgreSQL", fileTable.id)
-    GeneratedES(DatastoreEngine.entity,
+    GeneratedES(FileTable.entity,
       "PostgreSQL",
       generatedId,
       GenerateESObject.genParentId(generatedId),
       Seq(CategoryES.fromFileTableGeneratedId(generatedId)),
       KeyValuePairES.fromFileTableList(fileTableList))
+  }
+
+  def genGenerated(fileColumn: FileColumn, fileColumnList: List[(FileColumn, KeyValuePair)])
+  : GeneratedES = {
+    val generatedId = GenerateESObject.genGeneratedId("PostgreSQL", fileColumn.id)
+    GeneratedES(FileColumn.entity,
+      "PostgreSQL",
+      generatedId,
+      GenerateESObject.genParentId(generatedId),
+      Seq(CategoryES.fromFileColumnGeneratedId(generatedId)),
+      KeyValuePairES.fromFileColumnList(fileColumnList))
+  }
+
+  def genGenerated(sqlTable: SqlTable, sqlTableList: List[(SqlTable, KeyValuePair)])
+  : GeneratedES = {
+    val generatedId = GenerateESObject.genGeneratedId("PostgreSQL", sqlTable.id)
+    GeneratedES(SqlTable.entity,
+      "PostgreSQL",
+      generatedId,
+      GenerateESObject.genParentId(generatedId),
+      Seq(CategoryES.fromSqlTableGeneratedId(generatedId)),
+      KeyValuePairES.fromSqlTableList(sqlTableList))
+  }
+
+  def genGenerated(sqlColumn: SqlColumn, sqlColumnList: List[(SqlColumn, KeyValuePair)])
+  : GeneratedES = {
+    val generatedId = GenerateESObject.genGeneratedId("PostgreSQL", sqlColumn.id)
+    GeneratedES(SqlColumn.entity,
+      "PostgreSQL",
+      generatedId,
+      GenerateESObject.genParentId(generatedId),
+      Seq(CategoryES.fromSqlColumnGeneratedId(generatedId)),
+      KeyValuePairES.fromSqlColumnList(sqlColumnList))
   }
 
 }
