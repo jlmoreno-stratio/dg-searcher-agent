@@ -21,8 +21,4 @@ object PostgresNotifications extends App with AppConf {
   val metadataExtractor = system.actorOf(Props(classOf[MetadataPartialExtractor], partialIndexer, circuitBreakerConf), "extractor")
   private lazy val partialIndexer = system.actorOf(Props(classOf[PartialIndexer]), "indexer")
 
-  // wait for the user to stop the server
-  println("Press <enter> to exit.")
-  Console.in.read.toChar
-  system.terminate
 }

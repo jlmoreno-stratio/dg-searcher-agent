@@ -97,15 +97,11 @@ class MetadataPartialExtractor(indexer: ActorRef, override val circuitBreakerCon
 
     case Chunks(list) =>
       if(list.nonEmpty){
-/*
-        (indexer ? PartialIndexer.IndexerEvent(list.head)).onSuccess{ case _ =>
-          self ! Chunks(list.tail)
-        }
-*/
         (indexer ? PartialIndexer.IndexerEvent(list.head)).onComplete{
           case Success(_) => self ! Chunks(list.tail)
           case Failure(e) => {
-            println(s"Fallo en la indexación ")
+            //TODO manage errors
+            println(s"Indexation failed")
             e.printStackTrace()
           }
 
