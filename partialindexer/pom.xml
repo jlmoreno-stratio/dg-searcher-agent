@@ -66,6 +66,11 @@
             <version>${postgresql_version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.typesafe.scala-logging</groupId>
+            <artifactId>scala-logging_${scala.binary.version}</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>
