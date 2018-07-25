@@ -4,14 +4,20 @@ import java.sql.Connection
 
 import akka.actor.Actor
 import akka.util.Timeout
+import com.stratio.governance.agent.searcher.http.HttpRequester
 import com.stratio.governance.agent.searcher.model.DatastoreEngine
 import com.stratio.governance.agent.searcher.model.es.DatastoreEngineES
 import com.stratio.governance.agent.searcher.totalindex.actor.TotalIndexer.IndexerEvent
+import org.json4s.DefaultFormats
 import scalikejdbc.ConnectionPool
 
+import scala.concurrent.Future
 import scala.concurrent.duration.MILLISECONDS
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class TotalIndexer extends Actor  {
+
+  implicit val formats: DefaultFormats.type = DefaultFormats
 
   val connection: Connection = ConnectionPool.borrow()
   implicit val timeout: Timeout =
@@ -25,6 +31,8 @@ class TotalIndexer extends Actor  {
       }
 
       val documentsBulk: String = org.json4s.native.Serialization.write(list)
+
+      sender ! Future(HttpRequester.totalPostRequest(documentsBulk))
 
       //TODO call total indexer endpoint and control status and errors
 /*
