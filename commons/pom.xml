@@ -12,6 +12,23 @@
     <groupId>com.stratio.governance.agent.searcher</groupId>
     <artifactId>commons</artifactId>
 
+    <dependencies>
+        <!-- Apache Http client-->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${http_client_version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.json4s/json4s-jackson -->
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-jackson_2.12</artifactId>
+            <version>3.5.4</version>
+        </dependency>
+
+    </dependencies>
+
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
         <testSourceDirectory>src/test/scala</testSourceDirectory>
